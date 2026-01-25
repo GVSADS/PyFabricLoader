@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "pyfabricloader",
+	"version": "${version}",
+	"name": "PyFabricLoader",
+	"description": "A Python mod loader for Minecraft Fabric using Jython, allowing to load and run Python mods.",
+	"authors": [
+		"银河万通软件开发工作室 工程部 TermiNexus"
+	],
+	"contact": {
+		"homepage": "https://www.gvsds.com",
+		"sources": "https://www.gvsds.com"
+	},
+	"license": "MIT",
+	"icon": "assets/pyfabricloader/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.gvsds.pyfabricloader.PyFabricLoader"
+		]
+	},
+	"mixins": [
+		"pyfabricloader.mixins.json",
+		{
+			"config": "pyfabricloader.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.14.0",
+		"minecraft": "[1.18.1,1.21.10]",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}

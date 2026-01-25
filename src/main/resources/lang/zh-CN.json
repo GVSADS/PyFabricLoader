@@ -1,0 +1,43 @@
+{
+  "commands": {
+    "help": {
+      "header": "PyFabricLoader 命令帮助",
+      "main": "显示帮助信息",
+      "list": "显示当前加载的mod",
+      "reload": "强制重载所有mod（管理员）",
+      "reload_file": "强制重载指定mod（管理员）",
+      "exec": "执行Jython代码",
+      "run": "执行pyfabric/files下的Python文件",
+      "help": "显示命令帮助",
+      "about": "显示关于信息",
+      "lang": "切换语言"
+    }
+  },
+  "messages": {
+    "no_mods": "当前没有加载任何Python模组。",
+    "loaded_mods": "已加载的Python模组（%d）：",
+    "reload_success": "已成功重载所有Python模组！",
+    "reload_failed": "重载模组时出错：%s",
+    "mod_reloaded": "已成功重载模组：%s",
+    "mod_not_found": "无法重载模组：%s，文件可能不存在。",
+    "mod_reload_failed": "重载模组 %s 时出错：%s",
+    "execution_success_no_output": "代码执行成功，但没有输出。",
+    "execution_result": "Python 执行结果：",
+    "execution_error": "Python 执行错误：%s",
+    "file_execution_result": "执行 %s 结果：",
+    "file_execution_failed": "执行文件 %s 时出错：%s",
+    "about": {
+      "header": "PyFabricLoader Version %s",
+      "author": "作者：%s",
+      "bilibili": "B站账号：",
+      "website": "工作室官网：",
+      "thanks": "感谢您的使用！"
+    },
+    "language_changed": "语言已切换为：%s",
+    "language_invalid": "无效的语言代码：%s，支持的语言：zh-CN, zh-TW, en",
+    "language_change_failed": "切换语言失败：%s",
+    "mod_loaded": "模组已加载: %s",
+    "load_failed": "加载失败: %s",
+    "init_failed": "初始化失败: %s"
+  }
+}

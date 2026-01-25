@@ -1,0 +1,14 @@
+{
+    "Mode": {
+        "Mods": true,
+        "ModSingleFileMode": true,
+        "Libs": true,
+        "Files": true
+    },
+    "Preload": {
+        "ModuleMatching": ".*\\.zip$",
+        "PriorityModuleMatching": "^!.*\\.zip$",
+        "CustomLoadOrder": []
+    },
+    "Lang": "zh-CN"
+}

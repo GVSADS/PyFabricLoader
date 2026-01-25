@@ -1,0 +1,48 @@
+{
+    "Mode": {
+        "Mods": true, // 启用 mod 模式
+        "ModSingleFileMode": true, // 启动 mod 单文件模式（即可将 .py 文件直接放在 pyfabric/mods 中）
+        "Libs": true, // 启用 lib 模式（扩展路径）
+        "Files": true // 启用 /pyfabricloader run "xxx.py" 功能
+    },
+    "Preload": {
+        "ModuleMatching": ".*\\.zip$", // 模组匹配正则表达式 *.zip
+        "PriorityModuleMatching": "^!.*\\.zip$", // 优先加载模组正则表达式 !*.zip
+        "CustomLoadOrder": [
+            // ["xxx.zip", 优先级数字]
+        ]
+    },
+    "Lang": "zh-CN", // zh-TW, en
+    "Debug": true // 启用 exec 等调试性功能
+}
+
+// 支持 jython class jar
+// 修复 __init__.py 问题
+// 注册命令问题
+// pyfabricloader 的 lang、exec、list、都应该是管理员权限
+// 1.18+ 版本
+1.18.1
+1.18.2
+1.19
+1.19.1
+1.19.2
+1.19.3
+1.19.4
+1.20
+1.20.1
+1.20.2
+1.20.3
+1.20.4
+1.20.5
+1.20.6
+1.21
+1.21.1
+1.21.2
+1.21.3
+1.21.4
+1.21.5
+1.21.6
+1.21.7
+1.21.8
+1.21.9
+1.21.10

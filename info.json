@@ -1,0 +1,7 @@
+{
+    "name": "TestTitleModule",
+    "version": "1.0.0",
+    "description": "Test Module - Display title information",
+    "pyfabric-version": "=1.0.0",
+    "minecraft-version": ">=1.21"
+}

@@ -1,0 +1,390 @@
+plugins {
+	id 'fabric-loom' version "${loom_version}"
+	id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+// 定义要构建的Minecraft版本列表
+def minecraftVersions = [
+    "1.18.1", "1.18.2",
+    "1.19", "1.19.1", "1.19.2", "1.19.3", "1.19.4",
+    "1.20", "1.20.1", "1.20.2", "1.20.3", "1.20.4", "1.20.5", "1.20.6",
+    "1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8", "1.21.9", "1.21.10"
+]
+
+// 注意：现在使用Groovy内置功能直接处理jar文件，不再需要外部工具
+
+// 为每个Minecraft版本创建特定的jar文件，使用简单直接的方法
+minecraftVersions.each { mcVersion ->
+    def taskName = "createJarFor${mcVersion.replace('.', '_')}"
+    def outputDir = file("${buildDir}/libs")
+    def outputFile = file("${outputDir}/pyfabricloader-${project.version}-${mcVersion}.jar")
+    
+    task(taskName) {
+        // 不依赖Minecraft设置任务
+        outputs.file(outputFile)
+        
+        doLast {
+            println "===== 开始生成 ${mcVersion} 版本的JAR文件 ===="
+            println "输出路径: ${outputFile.absolutePath}"
+            
+            // 确保输出目录存在
+            outputDir.mkdirs()
+            println "输出目录已创建: ${outputDir.exists()}"
+            
+            // 创建临时工作目录
+            def tempDir = file("${buildDir}/tmp/version_${mcVersion}")
+            tempDir.deleteDir() // 清理之前的临时文件
+            tempDir.mkdirs()
+            println "临时工作目录: ${tempDir.absolutePath}"
+            
+            try {
+                // 创建META-INF目录
+                def metaInfDir = file("${tempDir}/META-INF")
+                metaInfDir.mkdirs()
+                
+                // 优先使用src/main/resources目录下的fabric.mod.json
+                if (file("src/main/resources/fabric.mod.json").exists()) {
+                    def originalModJson = file("src/main/resources/fabric.mod.json").text
+                    // 替换版本占位符
+                    def updatedModJson = originalModJson.replace('${version}', project.version)
+                    // 更新minecraft版本约束，使用更精确的正则表达式
+                    updatedModJson = updatedModJson.replaceAll(/"minecraft":\s*"\[[^\]]*\]"/, "\"minecraft\": \"${mcVersion}\"")
+                    // 处理数组格式的情况
+                    updatedModJson = updatedModJson.replaceAll(/"minecraft":\s*\[.*?\]/, "\"minecraft\": \"${mcVersion}\"")
+                    file("${metaInfDir}/fabric.mod.json").write(updatedModJson)
+                    println "已从src/main/resources更新 fabric.mod.json"
+                } else if (file("META-INF/fabric.mod.json").exists()) {
+                    def originalModJson = file("META-INF/fabric.mod.json").text
+                    def updatedModJson = originalModJson.replaceAll(/"minecraft":\s*\["[^"]*"\]/, "\"minecraft\": \"${mcVersion}\"")
+                    // 修复可能的入口点包路径错误
+                    updatedModJson = updatedModJson.replace('"com.example.pyfabric.PyFabricLoader"', '"com.gvsds.pyfabricloader.PyFabricLoader"')
+                    file("${metaInfDir}/fabric.mod.json").write(updatedModJson)
+                    println "已从META-INF更新 fabric.mod.json并修复入口点"
+                } else {
+                    // 如果没有原始文件，创建一个基本的
+                     def modJsonContent = """
+                     {
+                       "schemaVersion": 1,
+                       "id": "pyfabricloader",
+                       "version": "${project.version}",
+                       "name": "PyFabricLoader",
+                       "description": "Python integration for Fabric Mod Loader",
+                       "authors": ["银河万通软件开发工作室 工程部 TermiNexus"],
+                       "contact": {
+                         "homepage": "https://www.gvsds.com",
+                         "sources": "https://www.gvsds.com"
+                       },
+                       "license": "MIT",
+                       "icon": "assets/pyfabricloader/icon.png",
+                       "environment": "*",
+                       "entrypoints": {
+                         "main": ["com.gvsds.pyfabricloader.PyFabricLoader"]
+                       },
+                       "mixins": [
+                         "pyfabricloader.mixins.json",
+                         {
+                           "config": "pyfabricloader.client.mixins.json",
+                           "environment": "client"
+                         }
+                       ],
+                       "depends": {
+                         "fabricloader": ">=0.14.0",
+                         "minecraft": "${mcVersion}",
+                         "java": ">=17",
+                         "fabric-api": "*"
+                       }
+                     }
+                     """
+                    file("${metaInfDir}/fabric.mod.json").write(modJsonContent)
+                    println "已创建默认 fabric.mod.json 文件"
+                }
+                
+                // 复制Python源代码文件
+                if (file("PyFabric").exists()) {
+                    copy {
+                        from 'PyFabric'
+                        into file("${tempDir}/PyFabric")
+                    }
+                    println "已复制 PyFabric 目录中的Python文件"
+                }
+                
+                // 复制根目录中的Python文件
+                copy {
+                    from '.'
+                    into tempDir
+                    include '*.py'
+                    include '__init__.py'
+                }
+                println "已复制根目录中的Python文件"
+                
+                // 复制src/main/resources中的资源文件
+                if (file("src/main/resources").exists()) {
+                    copy {
+                        from 'src/main/resources'
+                        into tempDir
+                    }
+                    println "已复制src/main/resources中的资源文件"
+                }
+                
+                // 复制编译后的Java类文件
+                if (file("build/classes/java/main").exists()) {
+                    copy {
+                        from 'build/classes/java/main'
+                        into tempDir
+                    }
+                    println "已复制编译后的Java类文件"
+                }
+                
+                // 确保META-INF目录存在
+                metaInfDir.mkdirs()
+                println "确保META-INF目录存在"
+                
+                // 添加LICENSE文件
+                if (file("LICENSE").exists()) {
+                    copy {
+                        from 'LICENSE'
+                        into tempDir
+                        rename { "LICENSE_pyfabricloader" }
+                    }
+                    println "已复制 LICENSE 文件"
+                }
+                
+                // 首先创建基本的JAR文件
+                println "正在创建基本JAR文件..."
+                ant.jar(destfile: outputFile) {
+                    fileset(dir: tempDir)
+                }
+                
+                // 强制包含Jython库，使用更直接的方法
+                def jythonJar = file('libs/jython-slim-3.0.1-SNAPSHOT-all.jar')
+                if (jythonJar.exists() && jythonJar.length() > 0) {
+                    println "Jython库存在，使用直接方法合并到JAR文件中..."
+                    
+                    try {
+                        // 创建一个临时目录来存放所有文件
+                        def tempMergeDir = file("${buildDir}/tmp/merge_${mcVersion}")
+                        tempMergeDir.deleteDir()
+                        tempMergeDir.mkdirs()
+                        
+                        // 首先复制基本文件到合并目录
+                        copy {
+                            from tempDir
+                            into tempMergeDir
+                        }
+                        println "已复制基本文件到合并目录"
+                        
+                        // 使用Groovy的zipFile解压Jython库到合并目录
+                        def zipFile = new java.util.zip.ZipFile(jythonJar)
+                        zipFile.entries().each { entry ->
+                            if (!entry.isDirectory()) {
+                                def targetFile = new File(tempMergeDir, entry.getName())
+                                targetFile.getParentFile().mkdirs()
+                                targetFile.withOutputStream { out ->
+                                    out << zipFile.getInputStream(entry)
+                                }
+                            }
+                        }
+                        zipFile.close()
+                        println "已成功解压Jython库到合并目录"
+                        
+                        // 重新创建JAR文件，包含所有内容
+                        ant.jar(destfile: outputFile) {
+                            fileset(dir: tempMergeDir) {
+                                // 排除可能的签名文件
+                                exclude(name: 'META-INF/*.SF')
+                                exclude(name: 'META-INF/*.DSA')
+                                exclude(name: 'META-INF/*.RSA')
+                                // 排除可能冲突的库
+                                exclude(name: 'org/objectweb/asm/**')
+                                exclude(name: 'com/google/common/**')
+                            }
+                        }
+                        println "已成功创建包含Jython的JAR文件"
+                        
+                    } catch (Exception e) {
+                        println "❌ 包含Jython库时出错: ${e.message}"
+                        e.printStackTrace()
+                        // 尝试使用备用方法
+                        try {
+                            println "尝试使用备用方法包含Jython库..."
+                            ant.jar(destfile: outputFile) {
+                                fileset(dir: tempDir)
+                                zipfileset(src: jythonJar) {
+                                    exclude(name: 'META-INF/*.SF')
+                                    exclude(name: 'META-INF/*.DSA')
+                                    exclude(name: 'META-INF/*.RSA')
+                                    exclude(name: 'org/objectweb/asm/**')
+                                    exclude(name: 'com/google/common/**')
+                                }
+                            }
+                            println "备用方法成功"
+                        } catch (Exception ex) {
+                            println "❌ 备用方法也失败: ${ex.message}"
+                        }
+                    } finally {
+                        // 清理临时目录
+                        if (tempMergeDir) {
+                            tempMergeDir.deleteDir()
+                        }
+                    }
+                } else {
+                    println "❌ Jython库文件不存在或为空"
+                }
+                
+                // 验证文件是否创建成功
+                if (outputFile.exists()) {
+                    println "✅ 成功创建版本特定JAR文件: ${outputFile.name}"
+                    println "文件大小: ${outputFile.length()} 字节"
+                } else {
+                    println "❌ 无法创建JAR文件，文件不存在"
+                }
+            } catch (Exception e) {
+                println "❌ 生成JAR文件时出错: ${e.message}"
+                e.printStackTrace()
+            } finally {
+                // 清理临时目录
+                tempDir.deleteDir()
+                println "临时目录已清理"
+                println "===== ${mcVersion} 版本JAR文件生成完成 ====="
+            }
+        }
+    }
+}
+
+// 创建一个聚合任务来为所有版本创建jar文件
+task createAllVersionJars {
+    dependsOn minecraftVersions.collect { "createJarFor${it.replace('.', '_')}" }
+    
+    doLast {
+        println "All version-specific JAR files have been generated."
+    }
+}
+
+// 修改jar任务，确保它在所有版本任务之前执行
+tasks.jar.doLast {
+    println "Main jar created. Run createAllVersionJars to generate version-specific jars."
+}
+
+repositories {
+	// 官方maven仓库
+	mavenCentral()
+	// 其他可能需要的仓库
+	maven {
+		name = "fabric"
+		url = "https://maven.fabricmc.net/"
+	}
+}
+
+loom {
+	splitEnvironmentSourceSets()
+	// 确保loom和shadow插件正常工作
+
+	mods {
+		"pyfabricloader" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+dependencies {
+	// To change the versions see the gradle.properties file
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	// Fabric API. This is technically optional, but you probably want it anyway.
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	
+	// Jython dependency from local libs folder
+	// 使用modImplementation确保编译时可用
+	modImplementation files('libs/jython-slim-3.0.1-SNAPSHOT-all.jar')
+	
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": inputs.properties.version
+	}
+}
+
+// 配置条件编译支持
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 17
+	
+	it.options.compilerArgs += [
+		"-Xlint:all",
+		"-parameters"
+	]
+}
+
+java {
+	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+	// if it is present.
+	// If you remove this line, sources will not be generated.
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
+}
+
+jar {
+	inputs.property "archivesName", project.base.archivesName
+
+	from("LICENSE") {
+		rename { "${it}_${inputs.properties.archivesName}"}
+	}
+}
+
+// 配置jar任务以手动打包Jython依赖
+jar {
+	// 设置重复文件策略
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	// 排除可能导致冲突的文件
+	exclude 'META-INF/*.SF'
+	exclude 'META-INF/*.DSA'
+	exclude 'META-INF/*.RSA'
+	
+	// 手动包含Jython jar的内容，但只排除冲突的库，保留所有org.python包
+	from(zipTree('libs/jython-slim-3.0.1-SNAPSHOT-all.jar')) {
+		// 排除META-INF中的签名文件
+		exclude 'META-INF/*.SF'
+		exclude 'META-INF/*.DSA'
+		exclude 'META-INF/*.RSA'
+		
+		// 排除ASM库，避免与Fabric Loader冲突
+		exclude 'org/objectweb/asm/**'
+		exclude 'org/objectweb/asm/*'
+		
+		// 排除Google Guava库，避免与Fabric环境冲突
+		exclude 'com/google/common/**'
+		exclude 'com/google/common/*'
+	}
+}
+
+// configure the maven publication
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			artifactId = project.archives_base_name
+			from components.java
+		}
+	}
+
+	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+	repositories {
+		// Add repositories to publish to here.
+		// Notice: This block does NOT have the same function as the block in the top level.
+		// The repositories here will be used for publishing your artifact, not for
+		// retrieving dependencies.
+	}
+}

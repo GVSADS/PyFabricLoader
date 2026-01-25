@@ -1,0 +1,43 @@
+{
+  "commands": {
+    "help": {
+      "header": "PyFabricLoader Command Help",
+      "main": "Show help information",
+      "list": "Show currently loaded mods",
+      "reload": "Force reload all mods (admin)",
+      "reload_file": "Force reload specific mod (admin)",
+      "exec": "Execute Jython code",
+      "run": "Execute Python file under pyfabric/files",
+      "help": "Show command help",
+      "about": "Show about information",
+      "lang": "Switch language"
+    }
+  },
+  "messages": {
+    "no_mods": "No Python modules loaded currently.",
+    "loaded_mods": "Loaded Python modules (%d):",
+    "reload_success": "Successfully reloaded all Python modules!",
+    "reload_failed": "Error during module reload: %s",
+    "mod_reloaded": "Successfully reloaded module: %s",
+    "mod_not_found": "Cannot reload module: %s, file may not exist.",
+    "mod_reload_failed": "Error reloading module %s: %s",
+    "execution_success_no_output": "Code executed successfully with no output.",
+    "execution_result": "Python execution result:",
+    "execution_error": "Python execution error: %s",
+    "file_execution_result": "Execution result of %s:",
+    "file_execution_failed": "Error executing file %s: %s",
+    "about": {
+      "header": "PyFabricLoader Version %s",
+      "author": "Author: %s",
+      "bilibili": "Bilibili Account:",
+      "website": "Studio Website:",
+      "thanks": "Thank you for using!"
+    },
+    "language_changed": "Language changed to: %s",
+    "language_invalid": "Invalid language code: %s, supported languages: zh-CN, zh-TW, en",
+    "language_change_failed": "Failed to change language: %s",
+    "mod_loaded": "Module loaded: %s",
+    "load_failed": "Load failed: %s",
+    "init_failed": "Initialization failed: %s"
+  }
+}
